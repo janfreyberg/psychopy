@@ -2810,6 +2810,8 @@ class StairHandler(_BaseTrialHandler):
                  nTrials=0,
                  nUp=1,
                  nDown=3,  # correct responses before stim goes down
+                 weightUp=1,
+                 weightDown=1,
                  extraInfo=None,
                  method='2AFC',
                  stepType='db',
@@ -2850,6 +2852,12 @@ class StairHandler(_BaseTrialHandler):
             nDown:
                 The number of 'correct' (or 1) responses before the
                 staircase level decreases.
+
+            weightUp:
+                The number by which an increase in intensity is multiplied
+
+            weightDown:
+                The number by which a decrease in intensity is multiplied
 
             extraInfo:
                 A dictionary (typically) that will be stored along with
@@ -2896,6 +2904,8 @@ class StairHandler(_BaseTrialHandler):
         self.startVal = startVal
         self.nUp = nUp
         self.nDown = nDown
+        self.weightUp = weightUp
+        self.weightDown = weightDown
         self.extraInfo = extraInfo
         self.method = method
         self.stepType = stepType
@@ -3127,11 +3137,12 @@ class StairHandler(_BaseTrialHandler):
         """increment the current intensity and reset counter
         """
         if self.stepType == 'db':
-            self._nextIntensity *= 10.0**(self.stepSizeCurrent / 20.0)
+            self._nextIntensity *= 10.0**(self.stepSizeCurrent * self.weightUp /
+                                          20.0)
         elif self.stepType == 'log':
-            self._nextIntensity *= 10.0**self.stepSizeCurrent
+            self._nextIntensity *= 10.0**(self.stepSizeCurrent * self.weightUp)
         elif self.stepType == 'lin':
-            self._nextIntensity += self.stepSizeCurrent
+            self._nextIntensity += self.stepSizeCurrent * self.weightUp
         # check we haven't gone out of the legal range
         if self._nextIntensity > self.maxVal and self.maxVal is not None:
             self._nextIntensity = self.maxVal
@@ -3141,11 +3152,13 @@ class StairHandler(_BaseTrialHandler):
         """decrement the current intensity and reset counter
         """
         if self.stepType == 'db':
-            self._nextIntensity /= 10.0**(self.stepSizeCurrent / 20.0)
+            self._nextIntensity /= 10.0**(self.stepSizeCurrent *
+                                          self.weightDown / 20.0)
         if self.stepType == 'log':
-            self._nextIntensity /= 10.0**self.stepSizeCurrent
+            self._nextIntensity /= 10.0**(self.stepSizeCurrent *
+                                          self.weightDown)
         elif self.stepType == 'lin':
-            self._nextIntensity -= self.stepSizeCurrent
+            self._nextIntensity -= self.stepSizeCurrent * self.weightDown
         self.correctCounter = 0
         # check we haven't gone out of the legal range
         if (self._nextIntensity < self.minVal) and self.minVal is not None:
